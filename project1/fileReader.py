@@ -81,6 +81,35 @@ def clusterSol(x,y,m,n,t):
         solution[k*m[0]+randint(0,m[0]-1)].append(i)
     return solution
 
+def clusterSol2(x,y,m,n,t):
+    solution=[]
+    for i in range(m[0]*t[0]):
+        solution.append([])
+    for i in range(n[0]):
+        k=0
+        current=(x[k+n[0]]-x[i])**2+(y[k+n[0]]-y[i])**2
+        for j in range(1,t[0]):
+            next=(x[j+n[0]]-x[i])**2+(y[j+n[0]]-y[i])**2
+            if (next<current):
+                current=next
+                k=j
+        solution[k*m[0]+randint(0,m[0]-1)].append(i)
+    return solution
+
+def writeSolutionToFile(name,solution,fitness,d,q,m,n,t):
+    file=open(name+".txt", "w+")
+    file.write(str(fitness)+"\n")
+    for vehiclenr in range(m[0]*t[0]):
+        if solution[vehiclenr]:
+            duration=0
+            cost=0
+            file.write(str(1+vehiclenr/m[0])+"\t"+str((vehiclenr+1)%m[0])+"\t")
+            for customer in solution[vehiclenr]:
+                duration+=d[customer]
+                cost+=q[customer]
+            file.write(str(duration)+"\t"+str(cost)+"\n")
+
+
 def isValid(sol,q,Q):
     if Q==0:
         return 1
@@ -103,7 +132,10 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     n=[0]
     t=[0]
     reader('p01.txt',x,y,D,d,q,Q,m,n,t)
-#    plot(clusterSol(x,y,m,n,t),x,y,m,n,t)
+    """solution=clusterSol(x,y,m,n,t)
+    print(fitness(solution,x,y,m,n,t))
+    plot(solution,x,y,m,n,t)"""
+
 
     population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
 
@@ -126,15 +158,17 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
                 child = crossover(copy.deepcopy(selection[i % len(selection)]))
             else:
                 child = copy.deepcopy(selection[i % len(selection)])
-            if(isValid(child,q,Q)):
+            if(isValid(child,q,Q[0])):
                 population.append(child)
             i += 1
 
     #print(fitness(population[0],x,y,m,n,t))
     population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
     print(fitness(population[0],x,y,m,n,t))
+    print(population[0])
+    writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
 
 
-main(1, 0.2, 200, 200,0)
+main(1, 0.2, 1000, 1000,0)
 

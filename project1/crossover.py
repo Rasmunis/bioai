@@ -23,7 +23,9 @@ def crossover(selection):
 
     # delete customers in the chunk from solution 2
     for customer in chunk:
-        [car.remove(customer) for car in randParent2]
+        for car in randParent2:
+            if customer in car:
+                car.remove(customer)
 
     # insert the chunk in Car2
     randParent2[randIndex2].insert(randint(0, len(randParent2[randIndex2])), chunk)
