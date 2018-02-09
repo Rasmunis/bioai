@@ -8,12 +8,19 @@ import copy
 """
 def crossover(selection):
     # select two random solutions from the selection to use for mating
-    randParent1 = copy.deepcopy(selection[randint(0, len(selection))])
-    randParent2 = copy.deepcopy(selection[randint(0, len(selection))])
+    randParent1 = copy.deepcopy(selection[randint(0, len(selection)-1)])
+    randParent2 = copy.deepcopy(selection[randint(0, len(selection)-1)])
 
     # select two random cars from within the solutions
-    randIndex1 = randint(0, len(randParent1))
-    randIndex2 = randint(0, len(randParent2))
+    randIndex1 = randint(0, len(randParent1)-1)
+    counter=0
+    while len(randParent1[randIndex1])<2:
+        counter+=1
+        randIndex1 = randint(0, len(randParent1)-1)
+        if counter>100:
+            print("endless loop warning")
+            return randParent1
+    randIndex2 = randint(0, len(randParent2)-1)
 
     # select two random indices from within Car1 to represent the start and end of the chunk to be transferred
     chunkStart = randint(0, len(randParent1[randIndex1])-2)
@@ -27,9 +34,12 @@ def crossover(selection):
         for car in randParent2:
             if customer in car:
                 car.remove(customer)
+    i=0
+    if not randParent2[randIndex2]:
+        i = randint(0, len(randParent2[randIndex2]))
 
     # insert the chunk in Car2
-    randParent2[randIndex2].insert(randint(0, len(randParent2[randIndex2])), chunk)
+    randParent2[randIndex2][i:i] = chunk
 
     return randParent2
 

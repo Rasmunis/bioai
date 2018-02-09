@@ -102,11 +102,14 @@ def writeSolutionToFile(name,solution,fitness,d,q,m,n,t):
         if solution[vehiclenr]:
             duration=0
             cost=0
-            file.write(str(1+vehiclenr/m[0])+"\t"+str((vehiclenr+1)%m[0])+"\t")
+            file.write(str(1+vehiclenr/m[0])+"  "+str((vehiclenr+1)%m[0])+"  ")
             for customer in solution[vehiclenr]:
                 duration+=d[customer]
                 cost+=q[customer]
-            file.write(str(duration)+"\t"+str(cost)+"\n")
+            file.write(str(duration)+"  "+str(cost)+"  ")
+            for cust in solution[vehiclenr]:
+                file.write(str(cust)+" ")
+            file.write("\n")
 
 
 def isValid(sol,q,Q):
@@ -140,11 +143,13 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     for sol in population:
         if (not (isValid(sol,q,Q))):
             population.pop(sol)
+    print(len(population))
     
-
+    fitnessList=[]
     
     for i in range(generations):
         population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+        fitnessList.append(fitness(population[0],x,y,m,n,t))
         selection = population[:int(survivalProp*len(population))]
         population = copy.deepcopy(selection)
         i = 0
@@ -166,6 +171,10 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
 
-main(1, 0.1, 100, 1000, 0.7)
+    plt.plot(range(generations), fitnessList, 'ro')
+    plt.axis([0, generations, 580, 650])
+    plt.show()
+
+main(0.4, 0.2, 400, 400, 1)
 
 
