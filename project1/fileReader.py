@@ -2,14 +2,12 @@ from random import randint, choice, random
 from fitness import fitness
 from mutation import mutation
 from crossover import crossover
-from math import floor
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-from matplotlib.colors import ListedColormap, BoundaryNorm
 import pylab as pl
 from matplotlib import collections as mc
+
 
 def plot(solution, x,y,m,n,t):
     totVehicles=m[0]*t[0]
@@ -54,6 +52,7 @@ def reader(filename,x,y,D,d,q,Q,m,n,t):
         y.append(array[2])
         d.append(array[3])
         q.append(array[4])
+
 
 def genRandSol(m,n,t):
     totVehicles=m[0]*t[0]
@@ -138,8 +137,6 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
 
 
     population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
-
-    population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
     for sol in population:
         if (not (isValid(sol,q,Q))):
             population.pop(sol)
@@ -155,7 +152,7 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
             if random() < mutationRate:
                 child = mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"]))
             elif random() < crossoverRate:
-                child = crossover(copy.deepcopy(selection[i % len(selection)]))
+                child = crossover(selection)
             else:
                 child = copy.deepcopy(selection[i % len(selection)])
             if(isValid(child,q,Q[0])):
@@ -169,6 +166,6 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
 
+main(1, 0.1, 100, 1000, 0.7)
 
-main(1, 0.2, 1000, 1000,0)
 

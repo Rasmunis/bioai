@@ -1,4 +1,5 @@
 from random import randint
+import copy
 
 """ HOW THIS CROSSOVER WORKS
     Take a random chunk from a random car of one parent (P1), with a length between 2 and the length of the car,
@@ -7,8 +8,8 @@ from random import randint
 """
 def crossover(selection):
     # select two random solutions from the selection to use for mating
-    randParent1 = selection[randint(0, len(selection))]
-    randParent2 = selection[randint(0, len(selection))]
+    randParent1 = copy.deepcopy(selection[randint(0, len(selection))])
+    randParent2 = copy.deepcopy(selection[randint(0, len(selection))])
 
     # select two random cars from within the solutions
     randIndex1 = randint(0, len(randParent1))
