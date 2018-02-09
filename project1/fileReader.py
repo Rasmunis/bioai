@@ -1,6 +1,7 @@
 from random import randint, choice, random
 from fitness import fitness
 from mutation import mutation
+from crossover import crossover
 from math import floor
 import copy
 import numpy as np
@@ -79,7 +80,7 @@ def clusterSol(x,y,m,n,t):
     return solution
 
 
-def main(mutationRate, survivalProp, initPopulation, generations):
+def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate):
     x=[]
     y=[]
     D=[]
@@ -91,7 +92,7 @@ def main(mutationRate, survivalProp, initPopulation, generations):
     t=[0]
     reader('p01.txt',x,y,D,d,q,Q,m,n,t)
 
-    population = [genRandSol(m,n,t) for x in range(initPopulation)]
+    population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
 
     for i in range(generations):
         population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
@@ -100,14 +101,18 @@ def main(mutationRate, survivalProp, initPopulation, generations):
         i = 0
         while len(population) < initPopulation:
             if random() < mutationRate:
-                population.append(mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"])))
+                child = mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"]))
+            elif random() < crossoverRate:
+                child = crossover(copy.deepcopy(selection[i % len(selection)]))
             else:
-                population.append(copy.deepcopy(selection[i % len(selection)]))
+                child = copy.deepcopy(selection[i % len(selection)])
+            population.append(child)
             i += 1
+            #print(fitness(population[0],x,y,m,n,t))
     population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
     print(fitness(population[0],x,y,m,n,t))
     plot(population[0], x, y, m, n, t)
 
 
-main(1, 0.02, 100, 100)
+main(1, 0.1, 100, 5000, 0.7)
 
