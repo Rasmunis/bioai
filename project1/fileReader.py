@@ -1,10 +1,14 @@
-from random import randint
+from random import randint, choice, random
+from fitness import fitness
+from mutation import mutation
+from math import floor
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import pylab as pl
-from matplotlib import collections  as mc
+from matplotlib import collections as mc
 
 def plot(solution, x,y,m,n,t):
     totVehicles=m[0]*t[0]
@@ -31,11 +35,6 @@ def plot(solution, x,y,m,n,t):
         ax.margins(0.1)
         plt.plot(x[n[0]:n[0]+t[0]], y[n[0]:n[0]+t[0]], 'ro')
     plt.show()
-
-    
-
-
-
 
 
 def reader(filename,x,y,D,d,q,Q,m,n,t):
@@ -80,8 +79,7 @@ def clusterSol(x,y,m,n,t):
     return solution
 
 
-
-def main():
+def main(mutationRate, survivalProp, initPopulation, generations):
     x=[]
     y=[]
     D=[]
@@ -96,4 +94,19 @@ def main():
     print(solution)
     plot(solution,x,y,m,n,t)
 
-main()
+    population = [genRandSol(m,n,t) for x in range(initPopulation)]
+
+    for i in range(generations):
+        population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+        selection = population[:floor(survivalProp*len(population))]
+        population = copy.deepcopy(selection)
+        i = 0
+        while len(population) < initPopulation-len(selection):
+            if random() < mutationRate:
+                population.append(copy.deepcopy(mutation(selection[i % len(selection)], choice(["switch", "move"]))))
+            else:
+                population.append(copy.deepcopy(selection[i % len(selection)]))
+            i += 1
+        print(fitness(selection[0],x,y,m,n,t))
+
+main(0.8, 0.2, 100, 1000)
