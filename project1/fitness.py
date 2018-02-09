@@ -1,25 +1,21 @@
-from importlib import import_module
 import math
 
-import_module('fileReader.py')
 
-
-def fitness(solution):
+def fitness(solution, x, y, m, n, t):
     fitness = 0
-    numberOfCars = m*t
+    numberOfCars = m[0]*t[0]
 
     for i in range(numberOfCars):
-        depotNumber = i//t
-        depotX = x[n+depotNumber]
-        depotY = y[n+depotNumber]
+        depotNumber = i//t[0]
+        depotX = x[n[0]+depotNumber]
+        depotY = y[n[0]+depotNumber]
         carRoute = solution[i]
-
-        fitness += euclidianDist(depotX, depotY, x[carRoute[0]], y[carRoute[0]])
-        for j in range(1,len(carRoute)):
-            fitness += euclidianDist(x[carRoute[j-1]], y[carRoute[j-1]], x[carRoute[j]], y[carRoute[j]])
-        fitness += euclidianDist(x[carRoute[-1]], y[carRoute[-1]], depotX, depotY)
-
-        return fitness
+        if len(carRoute):
+            fitness += euclidianDist(depotX, depotY, x[carRoute[0]], y[carRoute[0]])
+            for j in range(1,len(carRoute)):
+                fitness += euclidianDist(x[carRoute[j-1]], y[carRoute[j-1]], x[carRoute[j]], y[carRoute[j]])
+            fitness += euclidianDist(x[carRoute[-1]], y[carRoute[-1]], depotX, depotY)
+    return fitness
 
 
 def euclidianDist(x1, y1, x2, y2):

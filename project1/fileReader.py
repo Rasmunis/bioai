@@ -1,4 +1,8 @@
-from random import randint
+from random import randint, choice, random
+from fitness import fitness
+from mutation import mutation
+from math import floor
+import copy
 
 
 
@@ -28,7 +32,7 @@ def genRandSol(m,n,t):
     return solution
 
 
-def main():
+def main(mutationRate, survivalProp, initPopulation, generations):
     x=[]
     y=[]
     D=[]
@@ -40,4 +44,19 @@ def main():
     t=[0]
     reader('p01.txt',x,y,D,d,q,Q,m,n,t)
 
-main()
+    population = [genRandSol(m,n,t) for x in range(initPopulation)]
+
+    for i in range(generations):
+        population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+        selection = population[:floor(survivalProp*len(population))]
+        population = copy.deepcopy(selection)
+        i = 0
+        while len(population) < initPopulation-len(selection):
+            if random() < mutationRate:
+                population.append(copy.deepcopy(mutation(selection[i % len(selection)], choice(["switch", "move"]))))
+            else:
+                population.append(copy.deepcopy(selection[i % len(selection)]))
+            i += 1
+    print(fitness(selection[0],x,y,m,n,t))
+
+main(0.8, 0.2, 100, 1000)
