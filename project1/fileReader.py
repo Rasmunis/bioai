@@ -75,7 +75,7 @@ def clusterSol(x,y,m,n,t):
             if (next<current):
                 current=next
                 k=j
-        solution[k*m[0]].append(i)
+        solution[k*m[0]+randint(0,m[0]-1)].append(i)
     return solution
 
 
@@ -90,15 +90,12 @@ def main(mutationRate, survivalProp, initPopulation, generations):
     n=[0]
     t=[0]
     reader('p01.txt',x,y,D,d,q,Q,m,n,t)
-    solution=clusterSol(x,y,m,n,t)
-    print(solution)
-    plot(solution,x,y,m,n,t)
+#    plot(clusterSol(x,y,m,n,t),x,y,m,n,t)
 
-    population = [genRandSol(m,n,t) for x in range(initPopulation)]
-
+    population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
     for i in range(generations):
         population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
-        selection = population[:floor(survivalProp*len(population))]
+        selection = population[:int(survivalProp*len(population))]
         population = copy.deepcopy(selection)
         i = 0
         while len(population) < initPopulation-len(selection):
@@ -107,6 +104,8 @@ def main(mutationRate, survivalProp, initPopulation, generations):
             else:
                 population.append(copy.deepcopy(selection[i % len(selection)]))
             i += 1
-        print(fitness(selection[0],x,y,m,n,t))
 
-main(0.8, 0.2, 100, 1000)
+    print(fitness(population[0],x,y,m,n,t))
+    plot(population[0],x,y,m,n,t)
+
+main(1, 0.2, 100, 100)
