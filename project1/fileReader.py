@@ -103,7 +103,7 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
             if random() < mutationRate:
                 child = mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"]))
             elif random() < crossoverRate:
-                child = crossover(copy.deepcopy(selection[i % len(selection)]))
+                child = crossover(selection)
             else:
                 child = copy.deepcopy(selection[i % len(selection)])
             population.append(child)
@@ -114,5 +114,5 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     plot(population[0], x, y, m, n, t)
 
 
-main(1, 0.1, 100, 5000, 0.7)
+main(1, 0.1, 100, 1000, 0.7)
 
