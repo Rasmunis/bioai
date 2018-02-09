@@ -18,7 +18,7 @@ def crossover(selection, x, y, m, n, t):
 
     # delete customers in the chunk from solution 2
     for customer in chunk:
-        
+
 
     # insert the chunk in Car2
     randParent2[randIndex2].insert(randint(0, len(randParent2[randIndex2])), chunk)

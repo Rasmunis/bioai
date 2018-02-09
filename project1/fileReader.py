@@ -33,6 +33,7 @@ def plot(solution, x,y,m,n,t):
         ax.add_collection(lc)
         ax.autoscale()
         ax.margins(0.1)
+        plt.plot(x[n[0]:n[0]+t[0]], y[n[0]:n[0]+t[0]], 'ro')
     plt.show()
 
 
@@ -59,6 +60,22 @@ def genRandSol(m,n,t):
     for i in range (0,n[0]):
         vehicle=randint(0,totVehicles-1)
         solution[vehicle].append(i)
+    return solution
+
+
+def clusterSol(x,y,m,n,t):
+    solution=[]
+    for i in range(m[0]*t[0]):
+        solution.append([])
+    for i in range(n[0]):
+        k=0
+        current=(x[k+n[0]]-x[i])**2+(y[k+n[0]]-y[i])**2
+        for j in range(1,t[0]):
+            next=(x[j+n[0]]-x[i])**2+(y[j+n[0]]-y[i])**2
+            if (next<current):
+                current=next
+                k=j
+        solution[k*m[0]].append(i)
     return solution
 
 
@@ -91,4 +108,6 @@ def main(mutationRate, survivalProp, initPopulation, generations):
     print(fitness(population[0],x,y,m,n,t))
     plot(population[0], x, y, m, n, t)
 
+
 main(1, 0.02, 100, 100)
+
