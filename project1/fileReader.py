@@ -73,8 +73,6 @@ def main(mutationRate, survivalProp, initPopulation, generations):
     n=[0]
     t=[0]
     reader('p01.txt',x,y,D,d,q,Q,m,n,t)
-    solution=genRandSol(m,n,t)
-    plot(solution,x,y,m,n,t)
 
     population = [genRandSol(m,n,t) for x in range(initPopulation)]
 
@@ -83,12 +81,14 @@ def main(mutationRate, survivalProp, initPopulation, generations):
         selection = population[:floor(survivalProp*len(population))]
         population = copy.deepcopy(selection)
         i = 0
-        while len(population) < initPopulation-len(selection):
+        while len(population) < initPopulation:
             if random() < mutationRate:
-                population.append(copy.deepcopy(mutation(selection[i % len(selection)], choice(["switch", "move"]))))
+                population.append(mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"])))
             else:
                 population.append(copy.deepcopy(selection[i % len(selection)]))
             i += 1
-        print(fitness(selection[0],x,y,m,n,t))
+    population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+    print(fitness(population[0],x,y,m,n,t))
+    plot(population[0], x, y, m, n, t)
 
-main(0.8, 0.2, 100, 1000)
+main(1, 0.02, 100, 100)
