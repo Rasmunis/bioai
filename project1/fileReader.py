@@ -141,8 +141,8 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
 
     population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
     for sol in population:
-        if (not (isValid(sol,q,Q))):
-            population.pop(sol)
+        if (not (isValid(sol,q,Q[0]))):
+            population.remove(sol)
     print(len(population))
     
     fitnessList=[]
@@ -167,14 +167,13 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     #print(fitness(population[0],x,y,m,n,t))
     population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
     print(fitness(population[0],x,y,m,n,t))
-    print(population[0])
     writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
 
     plt.plot(range(generations), fitnessList, 'ro')
-    plt.axis([0, generations, 580, 650])
+    plt.axis([0, generations, 580, 800])
     plt.show()
 
-main(0.4, 0.2, 400, 400, 1)
+main(0.7, 0.5, 100, 1000, 1)
 
 
