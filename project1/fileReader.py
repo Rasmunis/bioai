@@ -1,4 +1,4 @@
-from random import randint, choice, random
+from random import randint, choice, random, sample
 from fitness import fitness
 from mutation import mutation
 from crossover import crossover
@@ -80,6 +80,7 @@ def clusterSol(x,y,m,n,t):
         solution[k*m[0]+randint(0,m[0]-1)].append(i)
     return solution
 
+
 def clusterSol2(x,y,m,n,t):
     solution=[]
     for i in range(m[0]*t[0]):
@@ -94,6 +95,7 @@ def clusterSol2(x,y,m,n,t):
                 k=j
         solution[k*m[0]+randint(0,m[0]-1)].append(i)
     return solution
+
 
 def writeSolutionToFile(name,solution,fitness,d,q,m,n,t):
     file=open(name+".txt", "w+")
@@ -123,6 +125,7 @@ def isValid(sol,q,Q):
             return 0
     return 1
 
+
 def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate):
     x=[]
     y=[]
@@ -138,19 +141,32 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
     print(fitness(solution,x,y,m,n,t))
     plot(solution,x,y,m,n,t)"""
 
-
     population = [clusterSol(x,y,m,n,t) for it in range(initPopulation)]
     for sol in population:
+
         if (not (isValid(sol,q,Q[0]))):
+
             population.remove(sol)
     print(len(population))
     
     fitnessList=[]
     
-    for i in range(generations):
+    for gen in range(generations):
         population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
         fitnessList.append(fitness(population[0],x,y,m,n,t))
-        selection = population[:int(survivalProp*len(population))]
+        # SELECTION METHOD 1
+        # selection = population[:int(survivalProp*len(population))]
+
+        # SELECTION METHOD 2
+        #selection = copy.deepcopy([population[0]])
+        #selection.extend([population[randint(int(survivalProp/2*len(population)), len(population)-1)] for solu in range(int(survivalProp/2*len(population)))])
+        #selection.extend([population[randint(0, int(survivalProp/2*len(population)))] for solu in range(int(survivalProp/2*len(population)))])
+
+        # TWEAK
+        selection = copy.deepcopy([population[0]])
+        selection.extend(sample(population[int(survivalProp / 2 * len(population)):], int(survivalProp / 2 * len(population))))
+        selection.extend(sample(population[:int(survivalProp / 2 * len(population))], int(survivalProp / 2 * len(population))))
+
         population = copy.deepcopy(selection)
         i = 0
         while len(population) < initPopulation:
@@ -160,11 +176,11 @@ def main(mutationRate, survivalProp, initPopulation, generations, crossoverRate)
                 child = crossover(selection)
             else:
                 child = copy.deepcopy(selection[i % len(selection)])
-            if(isValid(child,q,Q[0])):
+            if isValid(child,q,Q[0]):
                 population.append(child)
             i += 1
+        if gen % 100 == 0: print("GEN NO", gen, '\n', 'FITNESS ', fitness(population[0],x,y,m,n,t), '\n')
 
-    #print(fitness(population[0],x,y,m,n,t))
     population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
     print(fitness(population[0],x,y,m,n,t))
     writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
