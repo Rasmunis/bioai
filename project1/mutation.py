@@ -5,6 +5,8 @@ def mutation(solution, mutationType):
     randint(0,0)
     solSize = len(solution)
     randCar1 = randint(0, solSize-1)
+    while not solution[randCar1]:
+        randCar1 = randint(0, solSize-1)
     randCar2 = randint(0, solSize-1)
     if solution[randCar1] and solution[randCar2]:
         if mutationType == "switch":
