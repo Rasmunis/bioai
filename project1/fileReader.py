@@ -14,7 +14,7 @@ def plot(solution, x,y,m,n,t):
     color_list = plt.cm.Set3(np.linspace(0, 1, totVehicles))
     fig, ax=pl.subplots()
     plt.hold(True)
-    for i in range(0,totVehicles):
+    for i in range(totVehicles):
         color=color_list[i]
         depotIndex= n[0]+int(i/m[0])
         segments=[]
@@ -77,12 +77,23 @@ def clusterSol(x,y,m,n,t):
                 current=next
                 k=j
         solution[k*m[0]+randint(0,m[0]-1)].append(i)
+    for car in solution:
+        for j in range(1,len(car)-2):
+            closest = j+1
+            closestDist =(x[car[closest]]-x[car[j]])**2+(y[car[closest]]-y[car[j]])**2
+            for k in range(j+2,len(car)):
+                dist = (x[car[k]]-x[car[j]])**2+(y[car[k]]-y[car[j]])**2
+                if dist<closestDist:
+                    closestDist=dist
+                    closest=k
+            car[closest],car[j+1]=car[j+1],car[closest]
+
     return solution
 
 
 def clusterSol2(x,y,m,n,t):
     solution=clusterSol(x,y,m,n,t)
-    for count in range(10):
+    for count in range(20):
         solution2=[]
         cmx=[]
         cmy=[]
@@ -200,7 +211,7 @@ def isValid(sol,q,Q):
     plt.show()
 
 def main(initPopulation, generations, crossoverRate,pressure):
-    #seed(3)
+    #seed(8)
     x=[]
     y=[]
     D=[]
@@ -210,10 +221,8 @@ def main(initPopulation, generations, crossoverRate,pressure):
     m=[0]
     n=[0]
     t=[0]
-    reader('p01.txt',x,y,D,d,q,Q,m,n,t)
+    reader('p03.txt',x,y,D,d,q,Q,m,n,t)
     fitnessList=[]
-    solution=clusterSol2(x,y,m,n,t)
-    plot(solution,x,y,m,n,t)
     population = [clusterSol2(x,y,m,n,t) for it in range(2*initPopulation)]
     #population = [genRandSol(m,n,t) for it in range(2*initPopulation)]
     for sol in population:
@@ -225,14 +234,19 @@ def main(initPopulation, generations, crossoverRate,pressure):
         #pressure=pressure+stepSize
         population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
         fitnessList.append(fitness(population[0],x,y,m,n,t))
-        if gen%10==0:
+        if gen%100==0:
             print(fitnessList[gen], gen)
-        newGen=[]
+        newGen=[population[0]]
         while(len(newGen)<initPopulation):
             index=int((initPopulation)*(random()**pressure))
             if random()<crossoverRate:
+                chunkSize=randint(2,max([len(car) for car in population[index]])-2)
                 index2=int(initPopulation*(random()**pressure))
-                child = crossover([population[index], population[index2]])
+                child = crossover([population[index2], population[index]],chunkSize,q,Q)
+                while not isValid(child,q,Q[0]):
+                    index=int((initPopulation)*(random()**pressure))
+                    index2=int(initPopulation*(random()**pressure))
+                    child = crossover([population[index2], population[index]],chunkSize,q,Q)
             else:
                 child = mutation(copy.deepcopy(population[index]),"move")
             if isValid(child,q,Q[0]):
@@ -243,7 +257,7 @@ def main(initPopulation, generations, crossoverRate,pressure):
     writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
     plt.plot(range(len(fitnessList)), fitnessList, 'ro')
-    plt.axis([0, generations, 575, 1000])
+    plt.axis([0, generations, min(fitnessList)-10, max(fitnessList)])
     plt.show()
 
 
@@ -251,7 +265,7 @@ def main(initPopulation, generations, crossoverRate,pressure):
 
 
 
-main(800,300,0.3,1.45)
+main(40,3000,0.8,10)
 
 
 

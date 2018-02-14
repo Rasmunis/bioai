@@ -6,7 +6,7 @@ def fitness(solution, x, y, m, n, t):
     numberOfCars = m[0]*t[0]
 
     for i in range(numberOfCars):
-        depotNumber = i//t[0]
+        depotNumber = i//m[0]
         depotX = x[n[0]+depotNumber]
         depotY = y[n[0]+depotNumber]
         carRoute = solution[i]
