@@ -1,7 +1,7 @@
-from random import randint, choice, random, sample, seed
-from fitness import fitness
+from random import randint, choice, random, sample, seed, shuffle
+from fitness import fitness, routeLength, fitnessInit
 from mutation import mutation
-from crossover import crossover
+from crossover import crossover, crossoverInit
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,17 +23,17 @@ def plot(solution, x,y,m,n,t):
             l = len(solution[i])
             this=0
             next=0
-            for j in range(0,l-1):
+            for j in range(l-1):
                 this=solution[i][j]
                 next=solution[i][j+1]
                 segments.append([(x[this],y[this]), (x[next], y[next])])
             segments.append([(x[next],y[next]), (x[depotIndex], y[depotIndex])])
         
-        lc=mc.LineCollection(segments, colors=color, linewidths=3)
-        ax.add_collection(lc)
+            lc=mc.LineCollection(segments, colors=color, linewidths=1)
+            ax.add_collection(lc)
         ax.autoscale()
         ax.margins(0.1)
-    plt.plot(x[n[0]:n[0]+t[0]], y[n[0]:n[0]+t[0]], 'ro')
+    plt.plot(x[n[0]:n[0]+t[0]], y[n[0]:n[0]+t[0]], 'x')
     plt.show()
 
 
@@ -93,7 +93,7 @@ def clusterSol(x,y,m,n,t):
 
 def clusterSol2(x,y,m,n,t):
     solution=clusterSol(x,y,m,n,t)
-    for count in range(20):
+    for count in range(30):
         solution2=[]
         cmx=[]
         cmy=[]
@@ -127,91 +127,105 @@ def writeSolutionToFile(name,solution,fitness,d,q,m,n,t):
         if solution[vehiclenr]:
             duration=0
             cost=0
-            file.write(str(1+vehiclenr/m[0])+"  "+str((vehiclenr+1)%m[0])+"  ")
+            file.write(str(1+vehiclenr/m[0])+"   "+str((vehiclenr+1)%m[0])+"  ")
             for customer in solution[vehiclenr]:
                 duration+=d[customer]
                 cost+=q[customer]
-            file.write(str(duration)+"  "+str(cost)+"  ")
+            file.write(str(duration)+"   "+str(cost)+"  ")
             for cust in solution[vehiclenr]:
-                file.write(str(cust)+" ")
+                file.write(str(cust+1)+" ")
             file.write("\n")
 
 
-def isValid(sol,q,Q):
-    if Q==0:
+def isValid(sol,x,y,q,Q,d,D,m,n):
+    if Q==0 and D==0:
         return 1
-    for vehicle in sol:
+    for vehiclenr in range(len(sol)):
+        depotNumber=vehiclenr//m[0]
         demand=0
-        for customer in vehicle:
-                demand+=q[customer]
-        if demand>Q:
+        duration=routeLength(sol[vehiclenr],x,y,n,depotNumber)
+        for customer in sol[vehiclenr]:
+            demand+=q[customer]
+            duration+=d[customer]
+        if demand>Q or (D>0 and duration>D):
             return 0
     return 1
-    
-        #population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
 
+
+def genValidSol(x,y,m,n,t,q,Q):
+    solution=[]
+    qvalues=[]
+    dvalues=[]
+    carnr=0
+    carlist=range(m[0]*t[0])
+    shuffle(carlist)
+    for car in range(m[0]*t[0]):
+        solution.append([])
+        qvalues.append(0)
+    for customer in range(n[0]):
+        count=0
+        while qvalues[carlist[carnr]]+q[customer]>Q[0]:
+            carnr+=1
+            if carnr==m[0]*t[0]:
+                carnr=0
+            count+=1
+            if count>m[0]*t[0]:
+                return genValidSol(x,y,m,n,t,q,Q)
+        if carnr>m[0]*t[0]-1:
+            print("oops")
+            for carnr in carlist:
+                if qvalues[carnr]+q[customer]<=Q[0]:
+                    solution[carnr].append(customer)
+                    qvalues[carnr]+=q[customer]
+                    break
+            return genValidSol(x,y,m,n,t,q,Q)
+        else:
+            solution[carlist[carnr]].append(customer)
+            qvalues[carlist[carnr]]+=q[customer]
+    return solution
+
+def evolveInit(populationChunk,x,y,D,d,Q,q,m,n,t,):
+    partitionSize=len(populationChunk)
+    pressure=2
+    crossoverRate=0.6
+    populationChunk.sort(key=lambda solution: fitnessInit(solution, x, y, m, n, t,q,Q,d,D))
+    newGen=[populationChunk[0]]
+    count=0
+    while(len(newGen)<partitionSize):
         
-        # SELECTION METHOD 1
-        # selection = population[:int(survivalProp*len(population))]
+        index=int((partitionSize-1)*(random()**pressure))
+        chunkSize=randint(2,max([len(car) for car in populationChunk[index]])-1)
+        index2=int((partitionSize-1)*(random()**pressure))
+        child = crossoverInit([populationChunk[index2], populationChunk[index]],chunkSize)
+        newGen.append(child)
+    populationChunk=newGen
+    return populationChunk
 
-        # SELECTION METHOD 2
-        #selection = copy.deepcopy([population[0]])
-        #selection.extend([population[randint(int(survivalProp/2*len(population)), len(population)-1)] for solu in range(int(survivalProp/2*len(population)))])
-        #selection.extend([population[randint(0, int(survivalProp/2*len(population)))] for solu in range(int(survivalProp/2*len(population)))])
-
-        # TWEAK
-    """selection = copy.deepcopy([population[0]])
-        selection.extend(sample(population[int(survivalProp / 2 * len(population)):], int(survivalProp / 2 * len(population))))
-        selection.extend(sample(population[:int(survivalProp / 2 * len(population))], int(survivalProp / 2 * len(population))))
-
-        population = copy.deepcopy(selection)
-        i = 0
-        while len(population) < initPopulation:
-            if random() < mutationRate:
-                child = mutation(copy.deepcopy(selection[i % len(selection)]), choice(["switch", "move"]))
-            elif random() < crossoverRate:
-                child = crossover(selection)
-            else:
-                child = copy.deepcopy(selection[i % len(selection)])
-            if isValid(child,q,Q[0]):
-                population.append(child)
-            i += 1
-        if gen % 100 == 0: print("GEN NO", gen, '\n', 'FITNESS ', fitness(population[0],x,y,m,n,t), '\n')"""
-
-    """selection=[]
-        stepSize=int(initPopulation/5)
-        selection.extend(sample(population[0:stepSize], int(survivalProp*0.4*initPopulation)))
-        selection.extend(sample(population[stepSize:2*stepSize],int(survivalProp*0.3*initPopulation)))
-        selection.extend(sample(population[2*stepSize:3*stepSize],int(survivalProp*0.2*initPopulation)))
-        selection.extend(sample(population[3*stepSize:4*stepSize], int(survivalProp*0.1*initPopulation)))"""
-        
-    """population=[copy.deepcopy(best)]
-        
-        i=0
-        while (len(population)<initPopulation):
-            if random() < mutationRate:
-                child = mutation(copy.deepcopy(selection[i % len(selection)]), "move")
-            elif random() < crossoverRate:
-                child = crossover(selection)
-            else:
-                child = copy.deepcopy(selection[i % len(selection)])
-            if isValid(child,q,Q[0]):
-                population.append(child)
-            i+=1"""
-
-
-
-
-    population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
-    print(fitness(population[0],x,y,m,n,t))
-    writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
-    plot(population[0], x, y, m, n, t)
-    plt.plot(range(len(fitnessList)), fitnessList, 'ro')
-    plt.axis([0, generations, 580, 800])
-    plt.show()
-
-def main(initPopulation, generations, crossoverRate,pressure):
+def main(partitionNr,name,initPopulation, generations, crossoverRate,pressure):
     #seed(8)
+    def evolve(populationChunk):
+        for gen in range(generations):
+        #pressure=pressure+stepSize
+            populationChunk.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+            fitnessList.append(fitness(populationChunk[0],x,y,m,n,t))
+            newGen=[populationChunk[0]]
+            while(len(newGen)<partitionSize):
+                index=int((partitionSize-1)*(random()**pressure))
+                if random()<crossoverRate:
+                    chunkSize=randint(2,max([len(car) for car in populationChunk[index]])-1)
+                    index2=int((partitionSize-1)*(random()**pressure))
+                    child = crossover([populationChunk[index2], populationChunk[index]],chunkSize,q,Q)
+                    while not isValid(child,x,y,q,Q[0],d,D[0],m,n):
+                        index=int((partitionSize-1)*(random()**pressure))
+                        index2=int((partitionSize-1)*(random()**pressure))
+                        chunkSize=randint(2,max([len(car) for car in populationChunk[index]])-1)
+                        child = crossover([populationChunk[index2], populationChunk[index]],chunkSize,q,Q)
+                else:
+                    child = mutation(copy.deepcopy(populationChunk[index]),"move")
+                if isValid(child,x,y,q,Q[0],d,D[0],m,n):
+                    newGen.append(child)
+            populationChunk=newGen
+        return populationChunk
     x=[]
     y=[]
     D=[]
@@ -221,43 +235,56 @@ def main(initPopulation, generations, crossoverRate,pressure):
     m=[0]
     n=[0]
     t=[0]
-    reader('p03.txt',x,y,D,d,q,Q,m,n,t)
+    reader(name+'.txt',x,y,D,d,q,Q,m,n,t)
     fitnessList=[]
-    population = [clusterSol2(x,y,m,n,t) for it in range(2*initPopulation)]
+    population = [clusterSol2(x,y,m,n,t) for it in range(initPopulation)]
     #population = [genRandSol(m,n,t) for it in range(2*initPopulation)]
-    for sol in population:
-        if (not (isValid(sol,q,Q[0]))):
-            population.remove(sol)
-    print(len(population))
-    stepSize=3.0/generations
-    for gen in range(generations):
-        #pressure=pressure+stepSize
-        population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
-        fitnessList.append(fitness(population[0],x,y,m,n,t))
-        if gen%100==0:
-            print(fitnessList[gen], gen)
-        newGen=[population[0]]
-        while(len(newGen)<initPopulation):
-            index=int((initPopulation)*(random()**pressure))
-            if random()<crossoverRate:
-                chunkSize=randint(2,max([len(car) for car in population[index]])-2)
-                index2=int(initPopulation*(random()**pressure))
-                child = crossover([population[index2], population[index]],chunkSize,q,Q)
-                while not isValid(child,q,Q[0]):
-                    index=int((initPopulation)*(random()**pressure))
-                    index2=int(initPopulation*(random()**pressure))
-                    child = crossover([population[index2], population[index]],chunkSize,q,Q)
-            else:
-                child = mutation(copy.deepcopy(population[index]),"move")
-            if isValid(child,q,Q[0]):
-                newGen.append(child)
-        population=newGen
+    failurelist=[]
+    for nr in range(len(population)):
+        if not isValid(population[nr],x,y,q,Q[0],d,D[0],m,n):
+            failurelist.append(nr)
+    for nr in reversed(failurelist):
+        population.remove(population[nr])
+    if not population:
+        population = [genValidSol(x,y,m,n,t,q,Q) for it in range(initPopulation/2)]
+        population.sort(key=lambda solution: fitnessInit(solution,x,y,m,n,t,q,Q,d,D))
+        count=0
+        while not isValid(population[10],x,y,q,Q[0],d,D[0],m,n):
+            print(count, fitnessInit(population[0],x,y,m,n,t,q,Q,d,D))
+            count+=1
+            population=evolveInit(population,x,y,D,d,Q,q,m,n,t)
+            if count%100==0:
+                print(count, fitnessInit(population[0],x,y,m,n,t,q,Q,d,D))
+    failurelist=[]
+    for nr in range(len(population)):
+        if not isValid(population[nr],x,y,q,Q[0],d,D[0],m,n):
+            failurelist.append(nr)
+    for nr in reversed(failurelist):
+        population.remove(population[nr])
+    plot(population[0],x,y,m,n,t)
+    print(fitness(population[0],x,y,m,n,t))
+    while len(population)<initPopulation:
+        population.append(population[0])
+
+    partitionSize=initPopulation/partitionNr
+    partitions=range(0,initPopulation,partitionSize)
+    partitions.append(initPopulation)
+    print(partitions)
+    for run in range(partitionNr):
+        population[partitions[run]:partitions[run+1]]=copy.deepcopy(evolve(population[partitions[run]:partitions[run+1]]))
+        print(fitnessList[len(fitnessList)-1])
+    partitionSize=initPopulation
+    population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
+
+    population=evolve(population)
     population.sort(key=lambda solution: fitness(solution, x, y, m, n, t))
     print(fitness(population[0],x,y,m,n,t))
-    writeSolutionToFile("test",population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
+    writeSolutionToFile(name+'solution.txt',population[0],fitness(population[0],x,y,m,n,t),d,q,m,n,t)
     plot(population[0], x, y, m, n, t)
+    plot(population[1],x,y,m,n,t)
+    plot(crossover([population[1],population[0]], 5, q,Q),x,y,m,n,t)
     plt.plot(range(len(fitnessList)), fitnessList, 'ro')
-    plt.axis([0, generations, min(fitnessList)-10, max(fitnessList)])
+    plt.axis([0, len(fitnessList), min(fitnessList)-10, max(fitnessList)])
     plt.show()
 
 
@@ -265,7 +292,7 @@ def main(initPopulation, generations, crossoverRate,pressure):
 
 
 
-main(40,3000,0.8,10)
+main(1,'p01',200,100,1,5)
 
 
 
