@@ -64,9 +64,6 @@ func nonDominatedRank(P []*Solution) [][]*Solution {
 }
 
 
-
-
-
 func crowdingDistAssign(P []*Solution) {
    
     
