@@ -1,7 +1,7 @@
 package edgeHeap
 
 type Edge struct {
-	W         int
+	W         float64
 	Src       int
 	Dest      int
 	Direction int

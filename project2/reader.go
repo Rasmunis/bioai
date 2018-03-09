@@ -114,22 +114,22 @@ func getEdges(h *edgeHeap.EdgeHeap, node int, previousNode int, img image.Image)
 
 	if ((node+1)%maxX) != 0 && (node+1) != previousNode {
 		x2, y2 := getCoords(node+1, maxX, maxY)
-		heap.Push(h, edgeHeap.Edge{int(euclRGBdist(color1, img.At(x2, y2))), node, node + 1, 1})
+		heap.Push(h, edgeHeap.Edge{euclRGBdist(color1, img.At(x2, y2)), node, node + 1, 1})
 	}
 
 	if node%maxX != 0 && (node-1) != previousNode {
 		x2, y2 := getCoords(node-1, maxX, maxY)
-		heap.Push(h, edgeHeap.Edge{int(euclRGBdist(color1, img.At(x2, y2))), node, node - 1, 3})
+		heap.Push(h, edgeHeap.Edge{euclRGBdist(color1, img.At(x2, y2)), node, node - 1, 3})
 	}
 
 	if ((node + maxX) < maxX*maxY) && (node+maxX) != previousNode {
 		x2, y2 := getCoords(node+maxX, maxX, maxY)
-		heap.Push(h, edgeHeap.Edge{int(euclRGBdist(color1, img.At(x2, y2))), node, node + maxX, 2})
+		heap.Push(h, edgeHeap.Edge{euclRGBdist(color1, img.At(x2, y2)), node, node + maxX, 2})
 	}
 
 	if ((node - maxX) > 0) && (node-maxX) != previousNode {
 		x2, y2 := getCoords(node-maxX, maxX, maxY)
-		heap.Push(h, edgeHeap.Edge{int(euclRGBdist(color1, img.At(x2, y2))), node, node - maxX, 0})
+		heap.Push(h, edgeHeap.Edge{euclRGBdist(color1, img.At(x2, y2)), node, node - maxX, 0})
 	}
 
 }
