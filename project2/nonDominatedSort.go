@@ -6,21 +6,34 @@ import (
     "math/rand"
     "time"
     "image"
+    "image/color"
 )
 
+func Min(x, y int) int {
+    if x < y {
+        return x
+    }
+    return y
+}
 
+func Max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
 
-type Solution struct{genom []rune; fitCon, fitDif float64; dist float64}
+type Solution struct{Genome []int; FitCon, FitDif float64; Dist float64}
 
-type sillyFiller struct{}
+type empty struct{}
 
 
 func mutate(sol Solution) Solution{
     r:=rand.New(rand.NewSource(time.Now().UnixNano()))
-    N:= len(sol.genom)
+    N:= len(sol.Genome)
     index := r.Int() % N
     mut:=1+(r.Int()%4)
-    sol.genom[index]=(sol.genom[index]+mut)%5
+    sol.Genome[index]=(sol.Genome[index]+mut)%5
     return sol
 }
 
@@ -31,13 +44,13 @@ func nonDominatedRank(P []*Solution) [][]*Solution {
     F := make([][] *Solution, 1, nsqrt)
     F[0]=make([] *Solution, 1, nsqrt)
     domCount := make( map[*Solution]int)
-    S := make(map[*Solution]map[*Solution]sillyFiller)
+    S := make(map[*Solution]map[*Solution]empty)
     for _, indp := range P {
-        S[indp]=make(map[*Solution]sillyFiller)
+        S[indp]=make(map[*Solution]empty)
         for _, indq := range P {
-            if indq.fitCon < indp.fitCon && indq.fitDif<indp.fitDif{
+            if indq.FitCon < indp.FitCon && indq.FitDif<indp.FitDif{
                 S[indp][indq] = struct{}{}
-            }else if indp.fitCon<indq.fitCon&& indp.fitDif<indq.fitDif{
+            }else if indp.FitCon<indq.FitCon&& indp.FitDif<indq.FitDif{
                 domCount[indp]+=1
             }
         }
@@ -73,38 +86,172 @@ func crowdingDistAssign(P []*Solution) {
     maxdif := math.Inf(-1)
     mindif := math.Inf(1)
     for _, ind := range(P){
-        ind.dist = 0
-        maxcon = math.Max(maxcon, ind.fitCon)
-        mincon = math.Min(mincon, ind.fitCon)
-        maxdif=math.Max(maxdif, ind.fitDif)
-        mindif=math.Min(mindif,ind.fitDif)
+        ind.Dist = 0
+        maxcon = math.Max(maxcon, ind.FitCon)
+        mincon = math.Min(mincon, ind.FitCon)
+        maxdif=math.Max(maxdif, ind.FitDif)
+        mindif=math.Min(mindif,ind.FitDif)
     }
     fcon := maxcon-mincon
     fdif := maxdif-mindif
     sort.Slice(P, func(i,j int)bool {
-        return P[i].fitCon>P[j].fitCon
+        return P[i].FitCon>P[j].FitCon
     })
-    P[0].dist = math.Inf(1)
-    P[l-1].dist=math.Inf(1)
+     (*(P[0])).Dist = math.Inf(1)
+     (*(P[l-1])).Dist=math.Inf(1)
     for i:=1; i<l-1; i++{
-        P[i].dist += (P[i+1].fitCon-P[i-1].fitCon)/fcon
+         (*(P[i])).Dist += (P[i+1].FitCon-P[i-1].FitCon)/fcon
     }
     sort.Slice(P, func(i,j int)bool {
-        return P[i].fitDif>P[j].fitDif
+        return P[i].FitDif>P[j].FitDif
     })
-    P[0].dist=math.Inf(1)
-    P[l-1].dist=math.Inf(1)
+    P[0].Dist=math.Inf(1)
+    P[l-1].Dist=math.Inf(1)
     for i:=1; i< l-1; i++{
-        P[i].dist += (P[i+1].fitDif-P[i-1].fitDif)/fdif
+        (*(P[i])).Dist += (P[i+1].FitDif-P[i-1].FitDif)/fdif
     }
 }
     
-func fitnessDif(sol Solution, im image.Image) float64{
     
-    
-    
+func pointsToAlt(direction, x, y int, im *image.Image) (int, int) {
+    bounds := (*im).Bounds()
+    switch direction{
+    case 5:
+        return x,y
+    case 0:
+        if y<=bounds.Min.Y{
+            return x,y
+        }else{
+            return x,y-1
+        }
+    case 1:
+        if x >=bounds.Max.X{
+            return x,y
+        }else{
+            return x+1,y
+        }
+    case 2:
+        if y>= bounds.Max.Y{
+            return x,y
+        } else {
+            return x, y+1
+        }
+    case 3:
+        if x <= bounds.Min.X{
+            return x,y
+        } else{
+            return x-1,y
+        }
+    case 4:
+        return x,y
+    }
+    return x,y
 }
-
+    func pointsTo(direction, index int, im *image.Image) int {
+        bounds := (*im).Bounds()
+        x,y := getxy(index, im)
+        x,y = pointsToAlt(direction, x, y, im)
+        return x+bounds.Max.X*y
+    }
+    
+    func getxy(index int, im *image.Image)(int, int){
+        bounds := (*im).Bounds()
+        x := index % bounds.Max.X
+        y := index / bounds.Max.X
+        return x,y
+    }
+    
+    func getindex(x, y, xmax, ymin int)int{
+        return (x+(y-ymin)*xmax)
+    }
+    
+func nextTo(index int, im *image.Image) (int, int, int, int){
+    
+    bounds := (*im).Bounds()
+    xmax := bounds.Max.X
+    xmin := bounds.Min.X
+    ymax := bounds.Max.Y
+    ymin := bounds.Min.Y
+    x,y:= getxy(index, im)
+    
+    l := getindex( Max(x-1, xmin), y, xmax, ymin)
+    r := getindex( Min(x+1, xmax), y, xmax, ymin)
+    d := getindex( x, Min(y+1, ymax), xmax, ymin)
+    u := getindex( x, Max(y-1, ymin), xmax, ymin)
+    
+    return u, r, d, l
+}
+    
+func fitness(sol Solution, im *image.Image) (float64, float64) {
+    bounds := (*im).Bounds()
+    size := (bounds.Max.X-bounds.Min.X)*(bounds.Max.Y-bounds.Min.Y)
+    segments := make([]*map[int]empty,size,size)
+    for i:=0; i<size; i++{
+        segments[i]=& map[int] empty {
+        i: empty{} }
+    }
+    for i, dir:= range(sol.Genome){
+        for _, segment := range(segments){
+            _, ok := (*segment)[i]
+            if ok {
+                target := pointsTo(dir, i, im)
+                for j,_:= range(*segments[target]){
+                    (*segment)[j] = empty{}
+                }
+                segments[target] = segment
+            }
+        }
+    }
+    segmentSet := make(map[*map[int]empty]empty)
+    for _, segment := range(segments){
+        segmentSet[segment] = empty{}
+    }
+    var r,g,b uint32
+    
+    segmentColor := make(map[*map[int]empty] color.Color)
+    for segment, _ := range(segmentSet){
+        r=0
+        g=0
+        b=0
+        for i,_ := range(*segment){
+            
+            x,y:=getxy(i, im)
+            pr, pg, pb, _ := (*im).At(x,y).RGBA()
+            
+            r += pr
+            g += pg
+            b += pb
+        }
+        d := uint32(len(*segment))
+        r/=d
+        g/=d
+        b/=d
+        segmentColor[segment] = color.NRGBA {uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
+    }
+    nbors := make([]int, 0, 4)
+    fitdif := 0.0
+    fitcon := 0.0
+    for segment, _ := range(segmentSet){
+        sr, sg, sb,_ := segmentColor[segment].RGBA()
+        for i,_:=range(*segment){
+            pr,pg,pb,_ := (*im).At(getxy(i, im)).RGBA()
+            rd := pr-sr
+            gd := pg-sg
+            bd := pb-sb
+            fitdif+=math.Sqrt(float64(rd*rd + gd*gd + bd*bd))
+            u,d,l,f := nextTo(i, im)
+            nbors = append(nbors[:0], u,d,l,f)
+            for j:=0; j<4; j++{
+                s2r, s2g, s2b, _:= segmentColor[(segments[nbors[j]])].RGBA()
+                rd = s2r-sr
+                bd=s2b-sb
+                gd = s2g-sg
+                fitcon += math.Sqrt(float64(rd*rd + gd*gd + bd*bd))
+            }
+        }
+    }
+    return fitdif, fitcon
+}
 
 
 
