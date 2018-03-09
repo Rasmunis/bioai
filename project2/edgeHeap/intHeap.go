@@ -1,8 +1,10 @@
 package edgeHeap
 
 type Edge struct {
-	W     int
-	nodes []int
+	W         float64
+	Src       int
+	Dest      int
+	Direction int
 }
 
 // An IntHeap is a min-heap of ints.
