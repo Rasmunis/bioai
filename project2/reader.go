@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/jpeg"
 	"math"
 	"math/rand"
-	"os"
 
+	"./crossover"
 	"./edgeHeap"
 )
 
 func main() {
-	file, _ := os.Open("./86016/Test image.jpg")
-	img, _ := jpeg.Decode(file)
-	color1 := img.At(100, 100)
-	color2 := img.At(100, 200)
-	fmt.Println("Color 1", color1)
-	fmt.Println("Color 2", color2)
-	fmt.Println("Diff", euclRGBdist(color1, color2))
-	prims(img)
+	// file, _ := os.Open("./86016/Test image.jpg")
+	// img, _ := jpeg.Decode(file)
+	// color1 := img.At(100, 100)
+	// color2 := img.At(100, 200)
+
+	p1 := []int{1, 2, 3, 4, 5, 6}
+	p2 := []int{6, 5, 4, 3, 2, 1}
+
+	fmt.Println(crossover.UniformCrossover(p1, p2))
 }
 
 func randomInit(img image.Image) []int {
