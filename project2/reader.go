@@ -2,13 +2,12 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"image"
 	"image/color"
 	"math"
 	"math/rand"
 
-	"./crossover"
+	"./drawer"
 	"./edgeHeap"
 )
 
@@ -17,11 +16,10 @@ func main() {
 	// img, _ := jpeg.Decode(file)
 	// color1 := img.At(100, 100)
 	// color2 := img.At(100, 200)
-
-	p1 := []int{1, 2, 3, 4, 5, 6}
-	p2 := []int{6, 5, 4, 3, 2, 1}
-
-	fmt.Println(crossover.UniformCrossover(p1, p2))
+	segments := make([]map[int]drawer.Empty, 2)
+	segments[0] = map[int]drawer.Empty{0: drawer.Empty{}, 1: drawer.Empty{}, 2: drawer.Empty{}, 3: drawer.Empty{}, 4: drawer.Empty{}, 5: drawer.Empty{}, 6: drawer.Empty{}, 7: drawer.Empty{}}
+	segments[1] = map[int]drawer.Empty{8: drawer.Empty{}, 9: drawer.Empty{}, 10: drawer.Empty{}, 11: drawer.Empty{}, 12: drawer.Empty{}, 13: drawer.Empty{}, 14: drawer.Empty{}, 15: drawer.Empty{}}
+	drawer.DrawBnW(segments, 4, 4)
 }
 
 func randomInit(img image.Image) []int {
@@ -102,7 +100,7 @@ func prims(img image.Image) []int {
 
 func getCoords(node, maxX, maxY int) (x, y int) {
 	x = node % maxX
-	y = node % maxY
+	y = int(node / maxY)
 	return
 }
 
