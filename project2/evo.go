@@ -15,24 +15,25 @@ import (
 
 func main() {
 
-	popSize := 20
-	genNum := 30
+	popSize := 2
+	genNum := 2
 
 	file, _ := os.Open("./86016/Test image.jpg")
 	img, _ := jpeg.Decode(file)
+
 	P := make([]*Solution, popSize, popSize)
 
 	mst, edges := Prims(img)
-	pop := Cutter(mst, edges, popSize, 50, 100)
-
+	Genomes := Cutter(mst, edges, popSize, 50, 100)
+	pop := make([]Solution, popSize, popSize)
 	for i := 0; i < popSize; i++ {
-		P[i] = &pop[i]
+		pop[i].Genome = Genomes[i]
+		P[i] = &(pop[i])
 	}
 	for i := 0; i < genNum; i++ {
 		fmt.Print(i)
 		fmt.Println(" ")
 		for _, sol := range P {
-			fmt.Println("time to evaluate fitness")
 			sol.FitDif, sol.FitCon = fitness(*sol, &img)
 		}
 		nextGen := make([]Solution, 0, popSize)
@@ -44,7 +45,6 @@ func main() {
 			child.FitDif, child.FitCon = fitness(child, &img)
 			nextGen = append(nextGen, child)
 			NG = append(NG, &child)
-			fmt.Println(" made a child!")
 		}
 		fmt.Println(len(NG) + len(P))
 		F := nonDominatedRank(append(NG, P...))
@@ -54,11 +54,7 @@ func main() {
 			Q = append(Q, F[i]...)
 			i++
 		}
-		fmt.Println("line55")
-		fmt.Print(len(F[i]), " ", i)
-		fmt.Println(" ")
-		fmt.Print((*(F[i][1])).Dist)
-		fmt.Println("")
+
 		sort.Slice(F[i], func(k, j int) bool {
 			return (*(F[i][j])).Dist > (*(F[i][k])).Dist
 		})
@@ -68,4 +64,6 @@ func main() {
 		}
 		P = Q
 	}
+	segments := findSegments(*(P[0]), &img)
+	DrawBnW(segments, img.Bounds().Max.X, img.Bounds().Max.Y, img)
 }

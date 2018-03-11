@@ -194,6 +194,37 @@ func nextTo(index int, im *image.Image) (int, int, int, int) {
 	return u, r, d, l
 }
 
+func findSegments(sol Solution, im *image.Image) []map[int]empty {
+	bounds := (*im).Bounds()
+	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
+	segments := make([]*map[int]empty, size, size)
+	for i := 0; i < size; i++ {
+		segments[i] = &map[int]empty{
+			i: empty{}}
+	}
+	var target int
+	for i, dir := range sol.Genome {
+		target = pointsTo(dir, i, im)
+		if target != i {
+			for j, _ := range *(segments[target]) {
+				(*(segments[i]))[j] = empty{}
+			}
+			segments[target] = segments[i]
+		}
+	}
+	fmt.Println("line 216")
+	segmentSet := make(map[*map[int]empty]empty)
+	segmentSlice := make([]map[int]empty, 0)
+	for _, segment := range segments {
+		segmentSet[segment] = empty{}
+	}
+	for segment, _ := range segmentSet {
+		segmentSlice = append(segmentSlice, *segment)
+	}
+	return segmentSlice
+
+}
+
 func fitness(sol Solution, im *image.Image) (float64, float64) {
 	bounds := (*im).Bounds()
 	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
