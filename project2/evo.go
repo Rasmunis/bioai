@@ -24,7 +24,7 @@ func main() {
 	P := make([]*Solution, popSize, popSize)
 
 	mst, edges := Prims(img)
-	Genomes := Cutter(mst, edges, popSize, 50, 100)
+	Genomes := Cutter(mst, edges, popSize, 5, 10)
 	pop := make([]Solution, popSize, popSize)
 	for i := 0; i < popSize; i++ {
 		pop[i].Genome = Genomes[i]

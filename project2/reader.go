@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -122,7 +121,6 @@ func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges in
 		worstEdges := edgesInMst[:nWorstEdges]
 		for j := 0; j < cuts; j++ {
 			randInt := rand.Intn(nWorstEdges - 1 - j)
-			fmt.Println("INDEX", randInt, "WORST", worstEdges, "SIZE", len(worstEdges))
 			currentEdge := worstEdges[randInt]
 			worstEdges = append(worstEdges[:randInt], worstEdges[randInt+1:]...)
 			individual[currentEdge.Src] = 4

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
+	"image/jpeg"
 	"image/png"
 	"os"
 )
@@ -15,9 +17,11 @@ func getCoords2(node, maxX, maxY int) (x, y int) {
 }
 
 func DrawBnW(segments []map[int]empty, maxX, maxY int, original image.Image) (image.Image, image.Image) {
-	fmt.Println("Hei :(")
+	fmt.Println("Hei :(", segments)
 	img := image.NewRGBA(image.Rect(0, 0, maxX, maxY))
-	img2, _ := original.(*image.RGBA)
+	b := original.Bounds()
+	img2 := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(img2, img2.Bounds(), original, b.Min, draw.Src)
 
 	for _, seg := range segments {
 		for pix := range seg {
@@ -49,6 +53,6 @@ func DrawBnW(segments []map[int]empty, maxX, maxY int, original image.Image) (im
 	defer f1.Close()
 	defer f2.Close()
 	png.Encode(f1, img)
-	png.Encode(f2, img2)
+	jpeg.Encode(f2, img2, nil)
 	return img, img2
 }
