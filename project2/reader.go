@@ -1,21 +1,14 @@
 package main
 
 import (
-<<<<<<< HEAD
-=======
 	"container/heap"
 	"fmt"
->>>>>>> 7edbdd02b358aeb078f11746b5baf22a4fdf419d
 	"image"
 	"image/color"
 	"math"
 	"math/rand"
-<<<<<<< HEAD
-=======
 	"os"
-
 	"./edgeHeap"
->>>>>>> 7edbdd02b358aeb078f11746b5baf22a4fdf419d
 )
 
 /*func main() {
@@ -26,12 +19,7 @@ import (
 	fmt.Println("Color 1", color1)
 	fmt.Println("Color 2", color2)
 	fmt.Println("Diff", euclRGBdist(color1, color2))
-<<<<<<< HEAD
 }*/
-=======
-	prims(img)
-}
->>>>>>> 7edbdd02b358aeb078f11746b5baf22a4fdf419d
 
 func randomInit(img image.Image) []int {
 	// get image dimensions
