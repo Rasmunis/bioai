@@ -6,27 +6,11 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
-<<<<<<< HEAD
-	"os"
+
 	"./edgeHeap"
 )
 
 /*func main() {
-	file, _ := os.Open("./86016/Test image.jpg")
-	img, _ := jpeg.Decode(file)
-	color1 := img.At(100, 100)
-	color2 := img.At(100, 200)
-	fmt.Println("Color 1", color1)
-	fmt.Println("Color 2", color2)
-	fmt.Println("Diff", euclRGBdist(color1, color2))
-}*/
-=======
-
-	"./drawer"
-	"./edgeHeap"
-)
-
-func main() {
 	// file, _ := os.Open("./86016/Test image.jpg")
 	// img, _ := jpeg.Decode(file)
 	// color1 := img.At(100, 100)
@@ -35,8 +19,7 @@ func main() {
 	segments[0] = map[int]drawer.Empty{0: drawer.Empty{}, 1: drawer.Empty{}, 2: drawer.Empty{}, 3: drawer.Empty{}, 4: drawer.Empty{}, 5: drawer.Empty{}, 6: drawer.Empty{}, 7: drawer.Empty{}}
 	segments[1] = map[int]drawer.Empty{8: drawer.Empty{}, 9: drawer.Empty{}, 10: drawer.Empty{}, 11: drawer.Empty{}, 12: drawer.Empty{}, 13: drawer.Empty{}, 14: drawer.Empty{}, 15: drawer.Empty{}}
 	drawer.DrawBnW(segments, 4, 4)
-}
->>>>>>> 2bb63eaa7d29009bc62efef292727cb6e7ad4e37
+}*/
 
 func randomInit(img image.Image) []int {
 	// get image dimensions
