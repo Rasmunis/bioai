@@ -2,24 +2,28 @@ package main
 
 import (
 	"container/heap"
+	"fmt"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"math"
 	"math/rand"
+	"os"
+	"sort"
+	"time"
 
-	"./drawer"
 	"./edgeHeap"
 )
 
 func main() {
-	// file, _ := os.Open("./86016/Test image.jpg")
-	// img, _ := jpeg.Decode(file)
+	file, _ := os.Open("./86016/Test image.jpg")
+	img, _ := jpeg.Decode(file)
 	// color1 := img.At(100, 100)
 	// color2 := img.At(100, 200)
-	segments := make([]map[int]drawer.Empty, 2)
-	segments[0] = map[int]drawer.Empty{0: drawer.Empty{}, 1: drawer.Empty{}, 2: drawer.Empty{}, 3: drawer.Empty{}, 4: drawer.Empty{}, 5: drawer.Empty{}, 6: drawer.Empty{}, 7: drawer.Empty{}}
-	segments[1] = map[int]drawer.Empty{8: drawer.Empty{}, 9: drawer.Empty{}, 10: drawer.Empty{}, 11: drawer.Empty{}, 12: drawer.Empty{}, 13: drawer.Empty{}, 14: drawer.Empty{}, 15: drawer.Empty{}}
-	drawer.DrawBnW(segments, 4, 4)
+	tree, edgi := Prims(img)
+	pop := Cutter(tree, edgi, 2, 10, 20)
+
+	fmt.Println(pop[0])
 }
 
 func randomInit(img image.Image) []int {
@@ -45,7 +49,7 @@ func generateWeightedGraph(img image.Image) {
 	}
 }
 
-func prims(img image.Image) []int {
+func Prims(img image.Image) ([]int, []edgeHeap.Edge) {
 	// get image dimensions
 	maxX := img.Bounds().Max.X
 	maxY := img.Bounds().Max.Y
@@ -73,6 +77,9 @@ func prims(img image.Image) []int {
 	// add initial node to nodes in mst
 	nodesInMst[initNode] = empty{}
 
+	// list of edges in mst, used for splitting into segments later
+	edgesInMst := make([]edgeHeap.Edge, 0)
+
 	// while the mst doesn't contain all pixels
 	for len(nodesInMst) < maxX*maxY {
 		// get edge with smallest rgb difference
@@ -85,6 +92,9 @@ func prims(img image.Image) []int {
 		// check if destination is already in the mst (cycle)
 		_, cycle := nodesInMst[dest]
 		if !cycle {
+			// add edge to edgesInMst
+			edgesInMst = append(edgesInMst, bestEdge.(edgeHeap.Edge))
+
 			// give the source a direction
 			mst[src] = bestEdge.(edgeHeap.Edge).Direction
 			// add destination to mst, without a direction yet (points to self)
@@ -95,7 +105,33 @@ func prims(img image.Image) []int {
 			getEdges(&edges, dest, src, img)
 		}
 	}
-	return mst
+	sort.SliceStable(edgesInMst, func(i, j int) bool {
+		return edgesInMst[i].W > edgesInMst[j].W
+	})
+	return mst, edgesInMst
+}
+
+func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges int) [][]int {
+	if cuts > nWorstEdges {
+		panic("YOOO, YOU CAN'T REMOVE MORE EDGES THAN THE N WORST EDGES.. (cuts > nWorstEdges)")
+	}
+
+	rand.Seed(time.Now().Unix())
+	population := make([][]int, 0)
+
+	for i := 0; i < popSize; i++ {
+		individual := mst
+		worstEdges := edgesInMst[:nWorstEdges]
+		for j := 0; j < cuts; j++ {
+			randInt := rand.Intn(nWorstEdges - 1 - j)
+			fmt.Println("INDEX", randInt, "WORST", worstEdges, "SIZE", len(worstEdges))
+			currentEdge := worstEdges[randInt]
+			worstEdges = append(worstEdges[:randInt], worstEdges[randInt+1:]...)
+			individual[currentEdge.Src] = 4
+		}
+		population = append(population, individual)
+	}
+	return population
 }
 
 func getCoords(node, maxX, maxY int) (x, y int) {
