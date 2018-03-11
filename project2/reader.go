@@ -2,11 +2,11 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"image"
 	"image/color"
 	"math"
 	"math/rand"
+<<<<<<< HEAD
 	"os"
 	"./edgeHeap"
 )
@@ -20,6 +20,23 @@ import (
 	fmt.Println("Color 2", color2)
 	fmt.Println("Diff", euclRGBdist(color1, color2))
 }*/
+=======
+
+	"./drawer"
+	"./edgeHeap"
+)
+
+func main() {
+	// file, _ := os.Open("./86016/Test image.jpg")
+	// img, _ := jpeg.Decode(file)
+	// color1 := img.At(100, 100)
+	// color2 := img.At(100, 200)
+	segments := make([]map[int]drawer.Empty, 2)
+	segments[0] = map[int]drawer.Empty{0: drawer.Empty{}, 1: drawer.Empty{}, 2: drawer.Empty{}, 3: drawer.Empty{}, 4: drawer.Empty{}, 5: drawer.Empty{}, 6: drawer.Empty{}, 7: drawer.Empty{}}
+	segments[1] = map[int]drawer.Empty{8: drawer.Empty{}, 9: drawer.Empty{}, 10: drawer.Empty{}, 11: drawer.Empty{}, 12: drawer.Empty{}, 13: drawer.Empty{}, 14: drawer.Empty{}, 15: drawer.Empty{}}
+	drawer.DrawBnW(segments, 4, 4)
+}
+>>>>>>> 2bb63eaa7d29009bc62efef292727cb6e7ad4e37
 
 func randomInit(img image.Image) []int {
 	// get image dimensions
@@ -99,7 +116,7 @@ func prims(img image.Image) []int {
 
 func getCoords(node, maxX, maxY int) (x, y int) {
 	x = node % maxX
-	y = node % maxY
+	y = int(node / maxY)
 	return
 }
 
