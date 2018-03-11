@@ -5,26 +5,24 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/jpeg"
 	"math"
 	"math/rand"
-	"os"
 	"sort"
 	"time"
 
 	"./edgeHeap"
 )
 
-func main() {
-	file, _ := os.Open("./86016/Test image.jpg")
-	img, _ := jpeg.Decode(file)
-	// color1 := img.At(100, 100)
-	// color2 := img.At(100, 200)
-	tree, edgi := Prims(img)
-	pop := Cutter(tree, edgi, 2, 10, 20)
-
-	fmt.Println(pop[0])
-}
+// func main() {
+// 	file, _ := os.Open("./86016/Test image.jpg")
+// 	img, _ := jpeg.Decode(file)
+// 	// color1 := img.At(100, 100)
+// 	// color2 := img.At(100, 200)
+// 	tree, edgi := Prims(img)
+// 	pop := Cutter(tree, edgi, 2, 10, 20)
+//
+// 	fmt.Println(pop[0])
+// }
 
 func randomInit(img image.Image) []int {
 	// get image dimensions
