@@ -83,7 +83,6 @@ func nonDominatedRank(P []*Solution) [][]*Solution {
 			}
 		}
 	}
-	fmt.Println("end of nonDominatedRank")
 	return F
 }
 
@@ -124,22 +123,20 @@ func crowdingDistAssign(P []*Solution) {
 func pointsToAlt(direction, x, y int, im *image.Image) (int, int) {
 	bounds := (*im).Bounds()
 	switch direction {
-	case 5:
-		return x, y
 	case 0:
-		if y <= bounds.Min.Y {
+		if y == bounds.Min.Y {
 			return x, y
 		} else {
 			return x, y - 1
 		}
 	case 1:
-		if x >= bounds.Max.X {
+		if x >= bounds.Max.X-1 {
 			return x, y
 		} else {
 			return x + 1, y
 		}
 	case 2:
-		if y >= bounds.Max.Y {
+		if y >= bounds.Max.Y-1 {
 			return x, y
 		} else {
 			return x, y + 1
@@ -193,68 +190,64 @@ func nextTo(index int, im *image.Image) (int, int, int, int) {
 	return u, r, d, l
 }
 
+func expand(index, count int, visited *map[int]empty, segmentSlice *[]map[int]empty, sol *Solution, im *image.Image) {
+	(*visited)[index] = empty{}
+	(*segmentSlice)[count][index] = empty{}
+	u, l, d, r := nextTo(index, im)
+	nbors := [4]int{u, l, d, r}
+	target := pointsTo((*sol).Genome[index], index, im)
+	_, ok := (*visited)[target]
+	if !ok {
+		expand(target, count, visited, segmentSlice, sol, im)
+	}
+	for _, j := range nbors {
+		_, ok := (*visited)[j]
+		if !ok && pointsTo(sol.Genome[j], j, im) == index {
+			expand(j, count, visited, segmentSlice, sol, im)
+		}
+	}
+}
 func findSegments(sol Solution, im *image.Image) []map[int]empty {
 	bounds := (*im).Bounds()
 	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
-	segments := make([]*map[int]empty, size, size)
+	segments := make([]*[]int, size, size)
 	for i := 0; i < size; i++ {
-		segments[i] = &map[int]empty{
-			i: empty{}}
+		segments[i] = &[]int{i}
 	}
-	var target int
-	for i, dir := range sol.Genome {
-		target = pointsTo(dir, i, im)
-		if target != i {
-			for j, _ := range *(segments[target]) {
-				(*(segments[i]))[j] = empty{}
-			}
-			segments[target] = segments[i]
+	count := 0
+	segmentSlice := make([]map[int]empty, 0)
+	visited := make(map[int]empty)
+	for i, _ := range sol.Genome {
+		_, ok := visited[i]
+		if !ok {
+			segmentSlice = append(segmentSlice, make(map[int]empty))
+			expand(i, count, &visited, &segmentSlice, &sol, im)
+			count++
 		}
 	}
-	fmt.Println("line 216")
-	segmentSet := make(map[*map[int]empty]empty)
-	segmentSlice := make([]map[int]empty, 0)
-	for _, segment := range segments {
-		segmentSet[segment] = empty{}
-	}
-	for segment, _ := range segmentSet {
-		segmentSlice = append(segmentSlice, *segment)
-	}
 	return segmentSlice
-
 }
 
 func fitness(sol Solution, im *image.Image) (float64, float64) {
-	bounds := (*im).Bounds()
-	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
-	segments := make([]*map[int]empty, size, size)
-	for i := 0; i < size; i++ {
-		segments[i] = &map[int]empty{
-			i: empty{}}
-	}
-	var target int
-	for i, dir := range sol.Genome {
-		target = pointsTo(dir, i, im)
-		if target != i {
-			for j, _ := range *segments[target] {
-				(*segments[i])[j] = empty{}
-			}
-			segments[target] = segments[i]
+
+	segmentSlice := make([]map[int]empty, 0)
+	visited := make(map[int]empty)
+	count := 0
+	for i, _ := range sol.Genome {
+		_, ok := visited[i]
+		if !ok {
+			segmentSlice = append(segmentSlice, make(map[int]empty))
+			expand(i, count, &visited, &segmentSlice, &sol, im)
+			count++
 		}
 	}
-	fmt.Println("Hei :)")
-	segmentSet := make(map[*map[int]empty]empty)
-	for _, segment := range segments {
-		segmentSet[segment] = empty{}
-	}
 	var r, g, b uint32
-
-	segmentColor := make(map[*map[int]empty]color.Color)
-	for segment, _ := range segmentSet {
+	segmentColor := make([]color.Color, len(segmentSlice))
+	for i, segment := range segmentSlice {
 		r = 0
 		g = 0
 		b = 0
-		for i, _ := range *segment {
+		for i, _ := range segment {
 
 			x, y := getxy(i, im)
 			pr, pg, pb, _ := (*im).At(x, y).RGBA()
@@ -263,18 +256,19 @@ func fitness(sol Solution, im *image.Image) (float64, float64) {
 			g += pg
 			b += pb
 		}
-		d := uint32(len(*segment))
+		d := uint32(len(segment))
 		r /= d
 		g /= d
 		b /= d
-		segmentColor[segment] = color.NRGBA{uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
+
+		segmentColor[i] = color.NRGBA{uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
 	}
 	nbors := make([]int, 0, 4)
 	fitdif := 0.0
 	fitcon := 0.0
-	for segment, _ := range segmentSet {
-		sr, sg, sb, _ := segmentColor[segment].RGBA()
-		for i, _ := range *segment {
+	for segnum, segment := range segmentSlice {
+		sr, sg, sb, _ := segmentColor[segnum].RGBA()
+		for i, _ := range segment {
 			pr, pg, pb, _ := (*im).At(getxy(i, im)).RGBA()
 			rd := pr - sr
 			gd := pg - sg
@@ -284,8 +278,14 @@ func fitness(sol Solution, im *image.Image) (float64, float64) {
 			nbors = append(nbors[:0], u, d, l, f)
 			for j := 0; j < 4; j++ {
 				nbor := nbors[j]
-				seg := segments[nbor]
-				s2r, s2g, s2b, _ := segmentColor[seg].RGBA()
+				var seg map[int]empty
+				for _, seg = range segmentSlice {
+				}
+				_, ok := seg[nbor]
+				if ok {
+					break
+				}
+				s2r, s2g, s2b, _ := segmentColor[segnum].RGBA()
 				rd = s2r - sr
 				bd = s2b - sb
 				gd = s2g - sg

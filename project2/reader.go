@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -65,14 +64,12 @@ func Prims(img image.Image) ([]int, []edgeHeap.Edge) {
 	// initial node
 	initNode := rand.Intn(maxX * maxY)
 	mst[initNode] = 4
-	fmt.Println("INITIAL NODE", initNode)
 
 	// initialize edgeHeap
 	edges := make(edgeHeap.EdgeHeap, 0)
 
 	// get edges from initial nodes and add to edgeHeap
 	getEdges(&edges, initNode, -1, img)
-	fmt.Println("INITIAL NODE EDGES", edges)
 
 	// add initial node to nodes in mst
 	nodesInMst[initNode] = empty{}
@@ -84,13 +81,10 @@ func Prims(img image.Image) ([]int, []edgeHeap.Edge) {
 	for len(nodesInMst) < maxX*maxY {
 		// get edge with smallest rgb difference
 		bestEdge := heap.Pop(&edges)
-		fmt.Println("BEST EDGE THIS ROUND: ", bestEdge)
 
 		// get source and destination node of the edge
 		src := bestEdge.(edgeHeap.Edge).Src
-		fmt.Println("SOURCE:", src)
 		dest := bestEdge.(edgeHeap.Edge).Dest
-		fmt.Println("DEST:", dest)
 
 		// check if destination is already in the mst (cycle)
 		_, cycle := nodesInMst[dest]
@@ -100,14 +94,11 @@ func Prims(img image.Image) ([]int, []edgeHeap.Edge) {
 
 			// give the dest a direction
 			mst[dest] = (bestEdge.(edgeHeap.Edge).Direction + 2) % 4
-
-			fmt.Println("MST AFTER ADD", mst)
 			// add destination to mst, without a direction yet (points to self)
 			// mark that the new node is in the mst
 			nodesInMst[dest] = empty{}
 			// add the edges from the new node to the heap
 			getEdges(&edges, dest, src, img)
-			fmt.Println("EDGELIST AFTER THIS ROUND", edges, "\n")
 		}
 	}
 	sort.SliceStable(edgesInMst, func(i, j int) bool {
@@ -141,7 +132,7 @@ func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges in
 
 func getCoords(node, maxX, maxY int) (x, y int) {
 	x = node % maxX
-	y = int(node / maxY)
+	y = int(node / maxX)
 	return
 }
 
