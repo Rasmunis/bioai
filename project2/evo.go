@@ -17,7 +17,7 @@ func main() {
 	popSize := 4
 	genNum := 20
 
-	file, _ := os.Open("./176035/Test image.jpg")
+	file, _ := os.Open("./147091/Test image.jpg")
 	img, _ := jpeg.Decode(file)
 	//file, _ := os.Open("./out.png")
 	//img, _ := png.Decode(file)
@@ -26,7 +26,8 @@ func main() {
 
 	mst, _ := Prims(img)
 
-	Genomes := initPop(mst, genNum, popSize, &img)
+	//Genomes := Cutter(mst, edges, popSize, 100, len(mst), 500, &img)
+	Genomes := initPop(mst, 100, popSize, &img)
 	pop := make([]Solution, popSize, popSize)
 
 	for i := 0; i < popSize; i++ {
