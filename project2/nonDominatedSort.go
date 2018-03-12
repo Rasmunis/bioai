@@ -25,19 +25,28 @@ func Max(x, y int) int {
 }
 
 type Solution struct {
-	Genome         []int
+	//Genome contains the graphstructure
+	Genome []int
+	//Cuts contains the indexes such that Genome[index]==4
+	Cuts []int
+	//all the following variables are set by the fitness function
 	FitCon, FitDif float64
 	Dist           float64
+	SegmentSlice   []map[int]empty
+	//SegmentColor [i] is the color of segments[i]
+	SegmentColor []color.Color
 }
 
 type empty struct{}
 
 func mutate(sol Solution) Solution {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	N := len(sol.Genome)
-	index := r.Int() % N
-	mut := 1 + (r.Int() % 4)
-	sol.Genome[index] = (sol.Genome[index] + mut) % 5
+	segnr := r.Int() % len(sol.SegmentSlice)
+	for i, _ := range sol.SegmentSlice[segnr] {
+		if sol.Genome[i] == 4 {
+			sol.Genome[i] = r.Int() % 4
+		}
+	}
 	return sol
 }
 
@@ -190,60 +199,44 @@ func nextTo(index int, im *image.Image) (int, int, int, int) {
 	return u, r, d, l
 }
 
-func expand(index, count int, visited *map[int]empty, segmentSlice *[]map[int]empty, sol *Solution, im *image.Image) {
-	(*visited)[index] = empty{}
-	(*segmentSlice)[count][index] = empty{}
+func expand(index int, visited map[int]empty, segment map[int]empty, im *image.Image, sol Solution) (map[int]empty, map[int]empty) {
+	visited[index] = empty{}
+	segment[index] = empty{}
 	u, l, d, r := nextTo(index, im)
 	nbors := [4]int{u, l, d, r}
-	target := pointsTo((*sol).Genome[index], index, im)
-	_, ok := (*visited)[target]
-	if !ok {
-		expand(target, count, visited, segmentSlice, sol, im)
-	}
 	for _, j := range nbors {
-		_, ok := (*visited)[j]
+		_, ok := visited[j]
 		if !ok && pointsTo(sol.Genome[j], j, im) == index {
-			expand(j, count, visited, segmentSlice, sol, im)
+			expand(j, visited, segment, im, sol)
 		}
 	}
+	return visited, segment
 }
-func findSegments(sol Solution, im *image.Image) []map[int]empty {
-	bounds := (*im).Bounds()
-	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
-	segments := make([]*[]int, size, size)
-	for i := 0; i < size; i++ {
-		segments[i] = &[]int{i}
-	}
-	count := 0
-	segmentSlice := make([]map[int]empty, 0)
+
+func findSegments(sol *Solution, im *image.Image) {
+	segmentSlice := make([]map[int]empty, 0, 1)
 	visited := make(map[int]empty)
 	for i, _ := range sol.Genome {
 		_, ok := visited[i]
 		if !ok {
-			segmentSlice = append(segmentSlice, make(map[int]empty))
-			expand(i, count, &visited, &segmentSlice, &sol, im)
-			count++
+			segment := make(map[int]empty)
+			segmentSlice = append(segmentSlice, segment)
+			visited, segment = expand(i, visited, segment, im, *sol)
+			segmentSlice = append(segmentSlice, segment)
 		}
+		sol.SegmentSlice = segmentSlice
 	}
-	return segmentSlice
+	(*sol).SegmentSlice = make([]map[int]empty, len(segmentSlice))
+	copy((*sol).SegmentSlice, segmentSlice)
 }
 
-func fitness(sol Solution, im *image.Image) (float64, float64) {
+func fitness(sol *Solution, im *image.Image) {
 
-	segmentSlice := make([]map[int]empty, 0)
-	visited := make(map[int]empty)
-	count := 0
-	for i, _ := range sol.Genome {
-		_, ok := visited[i]
-		if !ok {
-			segmentSlice = append(segmentSlice, make(map[int]empty))
-			expand(i, count, &visited, &segmentSlice, &sol, im)
-			count++
-		}
-	}
+	findSegments(sol, im)
+
 	var r, g, b uint32
-	segmentColor := make([]color.Color, len(segmentSlice))
-	for i, segment := range segmentSlice {
+	sol.SegmentColor = make([]color.Color, len(sol.SegmentSlice))
+	for i, segment := range sol.SegmentSlice {
 		r = 0
 		g = 0
 		b = 0
@@ -261,13 +254,13 @@ func fitness(sol Solution, im *image.Image) (float64, float64) {
 		g /= d
 		b /= d
 
-		segmentColor[i] = color.NRGBA{uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
+		sol.SegmentColor[i] = color.NRGBA{uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
 	}
 	nbors := make([]int, 0, 4)
 	fitdif := 0.0
 	fitcon := 0.0
-	for segnum, segment := range segmentSlice {
-		sr, sg, sb, _ := segmentColor[segnum].RGBA()
+	for segnum, segment := range sol.SegmentSlice {
+		sr, sg, sb, _ := sol.SegmentColor[segnum].RGBA()
 		for i, _ := range segment {
 			pr, pg, pb, _ := (*im).At(getxy(i, im)).RGBA()
 			rd := pr - sr
@@ -279,13 +272,13 @@ func fitness(sol Solution, im *image.Image) (float64, float64) {
 			for j := 0; j < 4; j++ {
 				nbor := nbors[j]
 				var seg map[int]empty
-				for _, seg = range segmentSlice {
+				for _, seg = range sol.SegmentSlice {
 				}
 				_, ok := seg[nbor]
 				if ok {
 					break
 				}
-				s2r, s2g, s2b, _ := segmentColor[segnum].RGBA()
+				s2r, s2g, s2b, _ := sol.SegmentColor[segnum].RGBA()
 				rd = s2r - sr
 				bd = s2b - sb
 				gd = s2g - sg
@@ -293,5 +286,86 @@ func fitness(sol Solution, im *image.Image) (float64, float64) {
 			}
 		}
 	}
-	return fitdif, fitcon
+	sol.FitDif = fitdif
+	sol.FitCon = fitcon
+}
+
+func expandInit(mst []int, treeSize *[]int, avrgColor *[]color.Color, nodenr int, img *image.Image) {
+
+	x, y := getxy(nodenr, img)
+	up, ri, do, le := nextTo(nodenr, img)
+	nbors := make([]int, 4)
+	nbors = append(nbors[:0], up, ri, do, le)
+	isPointedto := false
+	(*treeSize)[nodenr] = 1
+	(*avrgColor)[nodenr] = (*img).At(x, y)
+	r, g, b, _ := (*img).At(x, y).RGBA()
+
+	for _, j := range nbors {
+		if pointsTo(mst[j], j, img) == nodenr {
+			expandInit(mst, treeSize, avrgColor, j, img)
+			(*treeSize)[nodenr] += (*treeSize)[j]
+			segr, segg, segb, _ := (*avrgColor)[j].RGBA()
+			r += segr * uint32((*treeSize)[j])
+			g += segg * uint32((*treeSize)[j])
+			b += segb * uint32((*treeSize)[j])
+			isPointedto = true
+		}
+	}
+	if isPointedto {
+		r /= uint32((*treeSize)[nodenr])
+		g /= uint32((*treeSize)[nodenr])
+		b /= uint32((*treeSize)[nodenr])
+	}
+	(*avrgColor)[nodenr] = color.NRGBA{uint8(r / 0x101), uint8(g / 0x101), uint8(b / 0x101), 255}
+}
+
+type contrast struct {
+	index    int
+	contrast float64
+}
+
+func initPop(mst []int, cutnum, popSize int, img *image.Image) [][]int {
+	N := len(mst)
+	var root int
+	treeSize := make([]int, N)
+	avrgColor := make([]color.Color, N)
+	for i, dir := range mst {
+		if dir == 4 {
+			root = i
+			break
+		}
+	}
+	expandInit(mst, &treeSize, &avrgColor, root, img)
+	contrastlist := make([]contrast, N)
+	for i := 0; i < N; i++ {
+		contrastlist[i] = getContrast(avrgColor[i], img, pointsTo(mst[i], i, img))
+		contrastlist[i].index = i
+	}
+	sort.Slice(contrastlist, func(i, j int) bool {
+		return contrastlist[i].contrast > contrastlist[j].contrast
+	})
+	pop := make([][]int, popSize)
+	for i := 0; i < popSize; i++ {
+		pop[i] = make([]int, N)
+		deepcopy(pop[i], mst)
+		for whatever := 0; whatever < cutnum; whatever++ {
+			pop[i][contrastlist[N-whatever-1].index] = 4
+		}
+	}
+	return pop
+}
+
+func getContrast(col color.Color, img *image.Image, target int) contrast {
+
+	var ret contrast
+	ret.index = 0
+	r, g, b, _ := col.RGBA()
+	x, y := getxy(target, img)
+	pr, pg, pb, _ := (*img).At(x, y).RGBA()
+	dr := r - pr
+	dg := g - pg
+	db := b - pb
+	ret.contrast = math.Sqrt(float64(dr*dr + dg*dg + db*db))
+	return ret
 }

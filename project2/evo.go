@@ -1,13 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"image/jpeg"
-	"math"
-	"math/rand"
 	"os"
-	"sort"
-	"time"
 )
 
 /*
@@ -19,8 +14,8 @@ import (
 
 func main() {
 
-	popSize := 1
-	genNum := 1
+	popSize := 4
+	genNum := 20
 
 	file, _ := os.Open("./147091/Test image.jpg")
 	img, _ := jpeg.Decode(file)
@@ -38,20 +33,23 @@ func main() {
 	for i := 0; i < popSize; i++ {
 		pop[i].Genome = Genomes[i]
 		P[i] = &(pop[i])
+		fitness(P[i], &img)
 	}
-	for i := 0; i < genNum; i++ {
+	/*for i := 0; i < genNum; i++ {
 		fmt.Print(i)
 		fmt.Println(" ")
 		for _, sol := range P {
-			sol.FitDif, sol.FitCon = fitness(*sol, &img)
+			fitness(sol, &img)
+			fmt.Println(len(sol.SegmentSlice))
 		}
 		nextGen := make([]Solution, 0, popSize)
 		NG := make([]*Solution, 0, popSize)
 		for j := 0; j < popSize; j++ {
 			r := rand.New(rand.NewSource(time.Now().UnixNano()))
 			index := int(math.Pow(r.Float64(), 2)) * popSize
+			fmt.Println(len(pop[index].SegmentSlice))
 			child := mutate(pop[index])
-			child.FitDif, child.FitCon = fitness(child, &img)
+			fitness(&child, &img)
 			nextGen = append(nextGen, child)
 			NG = append(NG, &child)
 		}
@@ -72,6 +70,6 @@ func main() {
 		}
 		P = Q
 	}
-	segments := findSegments(*(P[0]), &img)
-	DrawBnW(segments, img.Bounds().Max.X, img.Bounds().Max.Y, img)
+	*/
+	DrawBnW(P[0].SegmentSlice, img.Bounds().Max.X, img.Bounds().Max.Y, img)
 }
