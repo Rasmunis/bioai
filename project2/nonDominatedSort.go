@@ -199,44 +199,53 @@ func nextTo(index int, im *image.Image) (int, int, int, int) {
 	return u, r, d, l
 }
 
-func expand(index int, visited map[int]empty, segment map[int]empty, im *image.Image, sol Solution) (map[int]empty, map[int]empty) {
-	visited[index] = empty{}
-	segment[index] = empty{}
+func expand(index, count int, visited *map[int]empty, segmentSlice *[]map[int]empty, sol *Solution, im *image.Image) {
+	(*visited)[index] = empty{}
+	(*segmentSlice)[count][index] = empty{}
 	u, l, d, r := nextTo(index, im)
 	nbors := [4]int{u, l, d, r}
+	target := pointsTo((*sol).Genome[index], index, im)
+	_, ok := (*visited)[target]
+	if !ok {
+		expand(target, count, visited, segmentSlice, sol, im)
+	}
 	for _, j := range nbors {
-		_, ok := visited[j]
+		_, ok := (*visited)[j]
 		if !ok && pointsTo(sol.Genome[j], j, im) == index {
-			expand(j, visited, segment, im, sol)
+			expand(j, count, visited, segmentSlice, sol, im)
 		}
 	}
-	return visited, segment
 }
 
-func findSegments(sol *Solution, im *image.Image) {
-	segmentSlice := make([]map[int]empty, 0, 1)
+func findSegments(sol Solution, im *image.Image) []map[int]empty {
+	bounds := (*im).Bounds()
+	size := (bounds.Max.X - bounds.Min.X) * (bounds.Max.Y - bounds.Min.Y)
+	segments := make([]*[]int, size, size)
+	for i := 0; i < size; i++ {
+		segments[i] = &[]int{i}
+	}
+	count := 0
+	segmentSlice := make([]map[int]empty, 0)
 	visited := make(map[int]empty)
 	for i, _ := range sol.Genome {
 		_, ok := visited[i]
 		if !ok {
-			segment := make(map[int]empty)
-			segmentSlice = append(segmentSlice, segment)
-			visited, segment = expand(i, visited, segment, im, *sol)
-			segmentSlice = append(segmentSlice, segment)
+			segmentSlice = append(segmentSlice, make(map[int]empty))
+			expand(i, count, &visited, &segmentSlice, &sol, im)
+			count++
 		}
-		sol.SegmentSlice = segmentSlice
 	}
-	(*sol).SegmentSlice = make([]map[int]empty, len(segmentSlice))
-	copy((*sol).SegmentSlice, segmentSlice)
+	return segmentSlice
 }
 
 func fitness(sol *Solution, im *image.Image) {
 
-	findSegments(sol, im)
-
+	segmentSlice := findSegments(*sol, im)
+	sol.SegmentSlice = segmentSlice
+	fmt.Println(len(segmentSlice))
 	var r, g, b uint32
-	sol.SegmentColor = make([]color.Color, len(sol.SegmentSlice))
-	for i, segment := range sol.SegmentSlice {
+	sol.SegmentColor = make([]color.Color, len(segmentSlice))
+	for i, segment := range segmentSlice {
 		r = 0
 		g = 0
 		b = 0
@@ -259,7 +268,7 @@ func fitness(sol *Solution, im *image.Image) {
 	nbors := make([]int, 0, 4)
 	fitdif := 0.0
 	fitcon := 0.0
-	for segnum, segment := range sol.SegmentSlice {
+	for segnum, segment := range segmentSlice {
 		sr, sg, sb, _ := sol.SegmentColor[segnum].RGBA()
 		for i, _ := range segment {
 			pr, pg, pb, _ := (*im).At(getxy(i, im)).RGBA()
@@ -272,7 +281,7 @@ func fitness(sol *Solution, im *image.Image) {
 			for j := 0; j < 4; j++ {
 				nbor := nbors[j]
 				var seg map[int]empty
-				for _, seg = range sol.SegmentSlice {
+				for _, seg = range segmentSlice {
 				}
 				_, ok := seg[nbor]
 				if ok {
@@ -290,7 +299,7 @@ func fitness(sol *Solution, im *image.Image) {
 	sol.FitCon = fitcon
 }
 
-func expandInit(mst []int, treeSize *[]int, avrgColor *[]color.Color, nodenr int, img *image.Image) {
+/*func expandInit(mst []int, treeSize *[]int, avrgColor *[]color.Color, nodenr int, img *image.Image) {
 
 	x, y := getxy(nodenr, img)
 	up, ri, do, le := nextTo(nodenr, img)
@@ -348,7 +357,7 @@ func initPop(mst []int, cutnum, popSize int, img *image.Image) [][]int {
 	pop := make([][]int, popSize)
 	for i := 0; i < popSize; i++ {
 		pop[i] = make([]int, N)
-		deepcopy(pop[i], mst)
+		copy(pop[i], mst)
 		for whatever := 0; whatever < cutnum; whatever++ {
 			pop[i][contrastlist[N-whatever-1].index] = 4
 		}
@@ -369,3 +378,4 @@ func getContrast(col color.Color, img *image.Image, target int) contrast {
 	ret.contrast = math.Sqrt(float64(dr*dr + dg*dg + db*db))
 	return ret
 }
+*/
