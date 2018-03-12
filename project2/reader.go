@@ -12,16 +12,15 @@ import (
 	"./edgeHeap"
 )
 
+//
 // func main() {
-// 	file, _ := os.Open("./out.png")
-// 	img, _ := png.Decode(file)
+// 	file, _ := os.Open("./147091/Test image.jpg")
+// 	img, _ := jpeg.Decode(file)
 // 	// color1 := img.At(100, 100)
 // 	// color2 := img.At(100, 200)
 // 	tree, edgi := Prims(img)
-// 	fmt.Println(tree, edgi)
-// 	pop := Cutter(tree, edgi, 2, 2, 2)
-//
-// 	fmt.Println(pop[0])
+// 	population := Cutter(tree, edgi, 1, 10, 5000, &img)
+// 	fmt.Println(population)
 // }
 
 func randomInit(img image.Image) []int {
@@ -107,7 +106,20 @@ func Prims(img image.Image) ([]int, []edgeHeap.Edge) {
 	return mst, edgesInMst
 }
 
-func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges int) [][]int {
+func getDepth(mst []int, index int, img *image.Image) int {
+	u, l, d, r := nextTo(index, img)
+	nbors := [4]int{u, l, d, r}
+
+	depth := 1
+	for _, n := range nbors {
+		if pointsTo(mst[n], n, img) == index {
+			depth += getDepth(mst, n, img)
+		}
+	}
+	return depth
+}
+
+func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges, minDepth int, img *image.Image) [][]int {
 	if cuts > nWorstEdges {
 		panic("YOOO, YOU CAN'T REMOVE MORE EDGES THAN THE N WORST EDGES.. (cuts > nWorstEdges)")
 	}
@@ -119,11 +131,16 @@ func Cutter(mst []int, edgesInMst []edgeHeap.Edge, popSize, cuts, nWorstEdges in
 		individual := make([]int, len(mst))
 		copy(individual, mst)
 		worstEdges := edgesInMst[:nWorstEdges]
-		for j := 0; j < cuts; j++ {
-			randInt := rand.Intn(nWorstEdges - j)
-			currentEdge := worstEdges[randInt]
-			worstEdges = append(worstEdges[:randInt], worstEdges[randInt+1:]...)
-			individual[currentEdge.Dest] = 4
+		cutsDone := 0
+		rounds := 0
+		for cutsDone < cuts {
+			currentEdge := worstEdges[rand.Intn(len(individual))]
+			depth := getDepth(individual, currentEdge.Src, img)
+			if depth > minDepth {
+				individual[currentEdge.Dest] = 4
+				cutsDone++
+			}
+			rounds++
 		}
 		population = append(population, individual)
 	}

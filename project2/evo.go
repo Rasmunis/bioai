@@ -19,19 +19,20 @@ import (
 
 func main() {
 
-	popSize := 10
-	genNum := 50
+	popSize := 1
+	genNum := 1
 
-	file, _ := os.Open("./176035/Test image.jpg")
+	file, _ := os.Open("./147091/Test image.jpg")
 	img, _ := jpeg.Decode(file)
 	//file, _ := os.Open("./out.png")
 	//img, _ := png.Decode(file)
 
 	P := make([]*Solution, popSize, popSize)
 
-	mst, edges := Prims(img)
+	mst, _ := Prims(img)
 
-	Genomes := Cutter(mst, edges, popSize, 100, 1000)
+	//Genomes := Cutter(mst, edges, popSize, 100, len(mst), 500, &img)
+	Genomes := initPop(mst, 100, popSize, &img)
 	pop := make([]Solution, popSize, popSize)
 
 	for i := 0; i < popSize; i++ {
