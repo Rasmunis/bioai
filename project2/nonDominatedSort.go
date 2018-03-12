@@ -184,11 +184,10 @@ func nextTo(index int, im *image.Image) (int, int, int, int) {
 		fmt.Print("index is to large!")
 	}
 	x, y := getxy(index, im)
-	ymax -= 1
-	xmax -= 1
+
 	l := getindex(Max(x-1, xmin), y, xmax, ymin)
-	r := getindex(Min(x+1, xmax), y, xmax, ymin)
-	d := getindex(x, Min(y+1, ymax), xmax, ymin)
+	r := getindex(Min(x+1, xmax-1), y, xmax, ymin)
+	d := getindex(x, Min(y+1, ymax-1), xmax, ymin)
 	u := getindex(x, Max(y-1, ymin), xmax, ymin)
 
 	return u, r, d, l
